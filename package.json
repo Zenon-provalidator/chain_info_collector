@@ -1,0 +1,28 @@
+{
+  "name": "chain_info_collector",
+  "version": "1.0.0",
+  "description": "chain_info_collector\r =============",
+  "main": "collector.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenon-provalidator/chain_info_collector.git"
+  },
+  "author": "Provalidator-zenon",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zenon-provalidator/chain_info_collector/issues"
+  },
+  "homepage": "https://github.com/zenon-provalidator/chain_info_collector#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.5",
+    "dotenv": "^8.2.0",
+    "node-cron": "^3.0.0",
+    "sync-fetch": "^0.3.0",
+    "sync-mysql": "^3.0.1",
+    "sync-request": "^6.1.0",
+    "telegraf": "^3.38.0"
+  }
+}
