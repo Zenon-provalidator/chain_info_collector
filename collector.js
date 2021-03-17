@@ -4,11 +4,13 @@ const request = require('sync-request')
 const fetch = require('sync-fetch')
 const db = require('./dbconnection').mysql
 const telegraf = require('telegraf')
-const cron = require('node-cron');
+const cron = require('node-cron')
+const logger = require('./log4js').log4js//logger
 const bot = new telegraf(process.env.BOT_TOKEN)
 
 //second minute hour day-of-month month day-of-week
-cron.schedule('*/10 * * * *', function(){
+cron.schedule('* * * * *', function(){
+	logger.debug(`run date : ${new Date()}`)
 	// get db coin loop
 	let res = db.query('SELECT * FROM coin')
 	let alert = ''
@@ -45,11 +47,11 @@ cron.schedule('*/10 * * * *', function(){
 		}
 		if(alert != ''){
 			//telegram.sendMessage(chatId, text, [extra]) => Promise
-			bot.telegram.sendMessage(process.env.BOT_ROOM, `[${d.name}]\n${alert}`);
+			bot.telegram.sendMessage(process.env.BOT_ROOM, `[${d.name}]\n${alert}`)
 			alert = ''
 		}
 	})
-})
+}).start()
 
 
 
