@@ -34,18 +34,18 @@ cron.schedule('* * * * *', function(){
 		
 		if(res2[0].git_tag_cnt < gitTagArr.length){
 			gitTagArr.forEach((d2)=>{
-				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_DATE()`)
+				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 			})
 			alert += 'new ! gitTag ' + d.git_url
 		}
 		
 		if(res2[0].proposal_cnt < proposalArr.length){
 			proposalArr.forEach((d2)=>{
-				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_DATE()`)
+				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 			})
 			alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
 		} else{//edit date
-			db.query(`UPDATE coin_info SET edit_date = CURRENT_DATE() WHERE coin_idx = '${d.idx}'`)
+			db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
 		}
 		if(alert != ''){
 			//telegram.sendMessage(chatId, text, [extra]) => Promise
