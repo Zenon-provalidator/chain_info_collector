@@ -43,9 +43,11 @@ cron.schedule('* * * * *', function(){
 			proposalArr.forEach((d2)=>{
 				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 			})
+			db.dispose()//db connection close
 			alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
 		} else{//edit date
 			db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
+			db.dispose()//db connection close
 		}
 		if(alert != ''){
 			//telegram.sendMessage(chatId, text, [extra]) => Promise
