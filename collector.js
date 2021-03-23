@@ -6,10 +6,11 @@ const telegraf = require('telegraf')
 const cron = require('node-cron')
 const logger = require('./log4js').log4js//logger
 const bot = new telegraf(process.env.BOT_TOKEN)
-
+const database = require('./dbconnection')
+let db = database.mysql
 //second minute hour day-of-month month day-of-week
 cron.schedule('* * * * *', function(){
-	const db = require('./dbconnection').mysql
+	db = database.mysql
 	logger.debug(`run date : ${new Date()}`)
 	try{
 		// get db coin loop
