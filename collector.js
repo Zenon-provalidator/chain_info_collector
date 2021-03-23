@@ -6,18 +6,16 @@ const telegraf = require('telegraf')
 const cron = require('node-cron')
 const logger = require('./log4js').log4js//logger
 const bot = new telegraf(process.env.BOT_TOKEN)
-const database = require('./dbconnection')
-let db = database.mysql
+const db = require('./dbconnection')
 //second minute hour day-of-month month day-of-week
-cron.schedule('* * * * *', function(){
-	db = database.mysql
+cron.schedule('* * * * * *', async function(){
 	logger.debug(`run date : ${new Date()}`)
 	try{
 		// get db coin loop
-		let res = db.query('SELECT * FROM coin')
+		let res = await db.query('SELECT * FROM coin')
 		let alert = ''
 	
-		res.forEach((d)=>{
+		res.forEach(async (d)=>{
 			let sql2 = `
 				SELECT *
 				FROM (
@@ -30,24 +28,24 @@ cron.schedule('* * * * *', function(){
 				    WHERE coin_idx=${d.idx} AND type='proposal'
 				) AS b
 			`
-			let res2 = db.query(sql2)
+			let res2 = await db.query(sql2)
 			let gitTagArr = getTag(d.git_url)
 			let proposalArr = getProposal(d.lcd_url)
 			
 			if(res2[0].git_tag_cnt < gitTagArr.length){
-				gitTagArr.forEach((d2)=>{
-					db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+				gitTagArr.forEach(async (d2)=>{
+					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 				})
 				alert += 'new ! gitTag ' + d.git_url
 			}
 			
 			if(res2[0].proposal_cnt < proposalArr.length){
-				proposalArr.forEach((d2)=>{
-					db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+				proposalArr.forEach(async (d2)=>{
+					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 				})
 				alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
 			} else{//edit date
-				db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
+				await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
 			}
 			if(alert != ''){
 				//telegram.sendMessage(chatId, text, [extra]) => Promise
@@ -55,10 +53,8 @@ cron.schedule('* * * * *', function(){
 				alert = ''
 			}
 		})
-		db.dispose()//db close
 	} catch(err){
 		logger.error(err)
-		db.dispose()//db close
 	}	
 }).start()
 
