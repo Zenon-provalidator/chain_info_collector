@@ -11,48 +11,52 @@ const bot = new telegraf(process.env.BOT_TOKEN)
 //second minute hour day-of-month month day-of-week
 cron.schedule('* * * * *', function(){
 	logger.debug(`run date : ${new Date()}`)
-	// get db coin loop
-	let res = db.query('SELECT * FROM coin')
-	let alert = ''
-
-	res.forEach((d)=>{
-		let sql2 = `
-			SELECT *
-			FROM (
-				SELECT COUNT(1) AS git_tag_cnt
-				FROM coin_info 
-			    WHERE coin_idx=${d.idx} AND type='git_tag'
-			) AS a,
-			(	SELECT COUNT(1) AS proposal_cnt
-				FROM coin_info 
-			    WHERE coin_idx=${d.idx} AND type='proposal'
-			) AS b
-		`
-		let res2 = db.query(sql2)
-		let gitTagArr = getTag(d.git_url)
-		let proposalArr = getProposal(d.lcd_url)
-		
-		if(res2[0].git_tag_cnt < gitTagArr.length){
-			gitTagArr.forEach((d2)=>{
-				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
-			})
-			alert += 'new ! gitTag ' + d.git_url
-		}
-		
-		if(res2[0].proposal_cnt < proposalArr.length){
-			proposalArr.forEach((d2)=>{
-				db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
-			})
-			alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
-		} else{//edit date
-			db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
-		}
-		if(alert != ''){
-			//telegram.sendMessage(chatId, text, [extra]) => Promise
-			bot.telegram.sendMessage(process.env.BOT_ROOM, `[${d.name}]\n${alert}`)
-			alert = ''
-		}
-	})
+	try{
+		// get db coin loop
+		let res = db.query('SELECT * FROM coin')
+		let alert = ''
+	
+		res.forEach((d)=>{
+			let sql2 = `
+				SELECT *
+				FROM (
+					SELECT COUNT(1) AS git_tag_cnt
+					FROM coin_info 
+				    WHERE coin_idx=${d.idx} AND type='git_tag'
+				) AS a,
+				(	SELECT COUNT(1) AS proposal_cnt
+					FROM coin_info 
+				    WHERE coin_idx=${d.idx} AND type='proposal'
+				) AS b
+			`
+			let res2 = db.query(sql2)
+			let gitTagArr = getTag(d.git_url)
+			let proposalArr = getProposal(d.lcd_url)
+			
+			if(res2[0].git_tag_cnt < gitTagArr.length){
+				gitTagArr.forEach((d2)=>{
+					db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+				})
+				alert += 'new ! gitTag ' + d.git_url
+			}
+			
+			if(res2[0].proposal_cnt < proposalArr.length){
+				proposalArr.forEach((d2)=>{
+					db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+				})
+				alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
+			} else{//edit date
+				db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
+			}
+			if(alert != ''){
+				//telegram.sendMessage(chatId, text, [extra]) => Promise
+				bot.telegram.sendMessage(process.env.BOT_ROOM, `[${d.name}]\n${alert}`)
+				alert = ''
+			}
+		})
+	} catch(err){
+		logger.error(err)
+	}
 }).start()
 
 
