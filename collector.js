@@ -2,7 +2,6 @@ require('dotenv').config()
 const cheerio = require('cheerio')
 const request = require('sync-request')
 const fetch = require('sync-fetch')
-const db = require('./dbconnection').mysql
 const telegraf = require('telegraf')
 const cron = require('node-cron')
 const logger = require('./log4js').log4js//logger
@@ -10,6 +9,7 @@ const bot = new telegraf(process.env.BOT_TOKEN)
 
 //second minute hour day-of-month month day-of-week
 cron.schedule('* * * * *', function(){
+	const db = require('./dbconnection').mysql
 	logger.debug(`run date : ${new Date()}`)
 	try{
 		// get db coin loop
@@ -54,9 +54,11 @@ cron.schedule('* * * * *', function(){
 				alert = ''
 			}
 		})
+		db.dispose()//db close
 	} catch(err){
 		logger.error(err)
-	}
+		db.dispose()//db close
+	}	
 }).start()
 
 
