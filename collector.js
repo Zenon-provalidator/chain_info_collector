@@ -8,7 +8,7 @@ const logger = require('./log4js').log4js//logger
 const bot = new telegraf(process.env.BOT_TOKEN)
 const db = require('./dbconnection')
 //second minute hour day-of-month month day-of-week
-cron.schedule('* * * * * *', async function(){
+cron.schedule('* * * * *', async function(){
 	logger.debug(`run date : ${new Date()}`)
 	try{
 		// get db coin loop
