@@ -54,9 +54,12 @@ cron.schedule('* * * * *', async function(){
 			await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
 			
 			if(alert != ''){
+				logger.debug(alert)
 				let bot = new telegraf(d.token)
 				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
-				logger.debug(alert)
+				.catch((err)=>{ //bot error
+					logger.error(err)
+				})
 				alert = ''
 			}
 		})
