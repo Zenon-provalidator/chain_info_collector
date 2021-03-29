@@ -15,7 +15,6 @@ cron.schedule('* * * * *', async function(){
 		let alert = ''
 	
 		res.forEach(async (d)=>{
-			let bot = new telegraf(d.token)
 			let sql2 = `
 				SELECT COUNT(1) AS proposal_cnt
 				FROM coin_info 
@@ -39,29 +38,37 @@ cron.schedule('* * * * *', async function(){
 				WHERE NOT EXISTS (SELECT value FROM coin_info WHERE value = a.value)
 			`
 			let res3 = await db.query(sql3)
+			let instSql = ''
 			res3.forEach(async (d3)=>{
-				await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP()`)
-				//send msg
-				await bot.telegram.sendMessage(d.room_id, `[${d.name}]new ! gitTag ${d.git_url}/releases/tag/${d3.value}`)
-				.catch((err)=>{ //bot error
-					logger.error(err)
-				})
-			})			
+				alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
+				instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP();`
+				//await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP()`)
+			})
 			
 			if(res2[0].proposal_cnt < proposalArr.length){
 				proposalArr.forEach(async (d2)=>{
-					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
-					//send msg
-					await bot.telegram.sendMessage(d.room_id, `[${d.name}]new ! proposal ${d.explorer_url}/proposals/${d2.split('|')[0]}`)
-					.catch((err)=>{ //bot error
-						logger.error(err)
-					})		
+					instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP();`
+					//await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 				})
+				alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
 			}
 			
-			//edit date
-			await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
+			//query
+			if(instSql != ''){ // insert 
+				await db.query(instSql)
+			} else{//edit date
+				await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
+			}
 			
+			if(alert != ''){
+				logger.debug(alert)
+				let bot = new telegraf(d.token)
+				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
+				.catch((err)=>{ //bot error
+					logger.error(err)
+				})
+				alert = ''
+			}
 		})
 	} catch(err){
 		logger.error(err)
