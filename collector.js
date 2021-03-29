@@ -38,12 +38,10 @@ cron.schedule('* * * * *', async function(){
 				WHERE NOT EXISTS (SELECT value FROM coin_info WHERE value = a.value)
 			`
 			let res3 = await db.query(sql3)
-			if(res3.length >0){
-				res3.forEach(async (d3)=>{
-					alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
-					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3}') ON DUPLICATE KEY UPDATE value='${d3}', edit_date = CURRENT_TIMESTAMP()`)
-				})
-			}
+			res3.forEach(async (d3)=>{
+				alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
+				await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP()`)
+			})			
 			
 			if(res2[0].proposal_cnt < proposalArr.length){
 				proposalArr.forEach(async (d2)=>{
