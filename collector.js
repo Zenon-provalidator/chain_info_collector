@@ -5,38 +5,44 @@ const fetch = require('sync-fetch')
 const telegraf = require('telegraf')
 const cron = require('node-cron')
 const logger = require('./log4js').log4js//logger
-const bot = new telegraf(process.env.BOT_TOKEN)
 const db = require('./dbconnection')
-//second minute hour day-of-month month day-of-week
-cron.schedule('* * * * *', async function(){
-	logger.debug(`run date : ${new Date()}`)
+
+cron.schedule('* * * * *', async function(){	
 	try{
-		// get db coin loop
-		let res = await db.query('SELECT * FROM coin')
+		logger.debug(`run date : ${new Date()}`)
+//		// get db coin loop
+		let res = await db.query('SELECT coin.*, bot.name AS bot_name, bot.token, bot.room_id FROM coin, bot')
 		let alert = ''
 	
 		res.forEach(async (d)=>{
 			let sql2 = `
-				SELECT *
-				FROM (
-					SELECT COUNT(1) AS git_tag_cnt
-					FROM coin_info 
-				    WHERE coin_idx=${d.idx} AND type='git_tag'
-				) AS a,
-				(	SELECT COUNT(1) AS proposal_cnt
-					FROM coin_info 
-				    WHERE coin_idx=${d.idx} AND type='proposal'
-				) AS b
+				SELECT COUNT(1) AS proposal_cnt
+				FROM coin_info 
+				WHERE coin_idx=${d.idx} AND type='proposal'
 			`
 			let res2 = await db.query(sql2)
 			let gitTagArr = getTag(d.git_url)
 			let proposalArr = getProposal(d.lcd_url)
-			
-			if(res2[0].git_tag_cnt < gitTagArr.length){
-				gitTagArr.forEach(async (d2)=>{
-					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+			let sql3 = `
+				SELECT *
+				FROM (
+			`
+				
+			gitTagArr.forEach((d2)=>{
+				sql3 +=`
+					SELECT '${d2}' AS value
+					UNION ALL
+				`
+			})
+			sql3 = sql3.slice(0,-14) + ` ) AS a
+				WHERE NOT EXISTS (SELECT value FROM coin_info WHERE value = a.value)
+			`
+			let res3 = await db.query(sql3)
+			if(res3.length >0){
+				res3.forEach(async (d3)=>{
+					alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
+					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3}') ON DUPLICATE KEY UPDATE value='${d3}', edit_date = CURRENT_TIMESTAMP()`)
 				})
-				alert += 'new ! gitTag ' + d.git_url
 			}
 			
 			if(res2[0].proposal_cnt < proposalArr.length){
@@ -44,12 +50,15 @@ cron.schedule('* * * * *', async function(){
 					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
 				})
 				alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
-			} else{//edit date
-				await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
 			}
+			
+			//edit date
+			await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
+			
 			if(alert != ''){
-				//telegram.sendMessage(chatId, text, [extra]) => Promise
-				bot.telegram.sendMessage(process.env.BOT_ROOM, `[${d.name}]\n${alert}`)
+				let bot = new telegraf(d.token)
+				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
+				logger.debug(alert)
 				alert = ''
 			}
 		})
