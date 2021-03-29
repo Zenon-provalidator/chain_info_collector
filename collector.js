@@ -42,7 +42,7 @@ cron.schedule('* * * * *', async function(){
 			res3.forEach(async (d3)=>{
 				await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP()`)
 				//send msg
-				bot.telegram.sendMessage(d.room_id, `[${d.name}]new ! gitTag ${d.git_url}/releases/tag/${d3.value}`)
+				await bot.telegram.sendMessage(d.room_id, `[${d.name}]new ! gitTag ${d.git_url}/releases/tag/${d3.value}`)
 				.catch((err)=>{ //bot error
 					logger.error(err)
 				})
@@ -51,12 +51,12 @@ cron.schedule('* * * * *', async function(){
 			if(res2[0].proposal_cnt < proposalArr.length){
 				proposalArr.forEach(async (d2)=>{
 					await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+					//send msg
+					await bot.telegram.sendMessage(d.room_id, `[${d.name}]new ! proposal ${d.explorer_url}/proposals/${d2.split('|')[0]}`)
+					.catch((err)=>{ //bot error
+						logger.error(err)
+					})		
 				})
-				//send msg
-				bot.telegram.sendMessage(d.room_id, `[${d.name}]new ! proposal ${d.explorer_url}/proposals/${d2.split('|')[0]}`)
-				.catch((err)=>{ //bot error
-					logger.error(err)
-				})		
 			}
 			
 			//edit date
