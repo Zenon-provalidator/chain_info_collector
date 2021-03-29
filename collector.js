@@ -41,7 +41,7 @@ cron.schedule('* * * * *', async function(){
 			let instSql = ''
 			res3.forEach(async (d3)=>{
 				alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
-				instSql += `INSERT INTO coin_info(coin_idx, coin_info.type, coin_info.value) VALUES ('${d.idx}', 'git_tag', '${d3.value}');`
+				instSql += `INSERT INTO coin_info(coin_idx, coin_info.type, coin_info.value) VALUES ('${d.idx}', 'git_tag', '${d3.value}');\n`
 			})
 			
 			if(res2[0].proposal_cnt < proposalArr.length){
