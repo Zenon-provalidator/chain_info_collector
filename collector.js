@@ -42,14 +42,14 @@ cron.schedule('* * * * *', async function(){
 			let instSql = ''
 			res3.forEach(async (d3)=>{
 				alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
-				instSql += `INSERT INTO coin_info(coin_idx, coin_info.type, coin_info.value) VALUES ('${d.idx}', 'git_tag', '${d3.value}'); `
+				instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}'); `
 			})
 			
 			//proposals
 			proposalArr.forEach(async (d2)=>{
 				if(res2[0].proposal_max > d2.split('|')[0]){
 					alert += (alert == '') ? 'new ! proposal '+d.explorer_url + '/proposals/' + d2.split('|')[0]: '\nnew ! proposal ' + d.explorer_url + '/proposals/' + d2.split('|')[0]
-					instSql += `INSERT INTO coin_info(coin_idx, coin_info.type, coin_info.value) VALUES ('${d.idx}', 'proposal', '${d2}'); `
+					instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}'); `
 				}
 			})
 			
