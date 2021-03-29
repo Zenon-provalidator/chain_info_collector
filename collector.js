@@ -16,7 +16,7 @@ cron.schedule('* * * * *', async function(){
 	
 		res.forEach(async (d)=>{
 			let sql2 = `
-				SELECT COUNT(1) AS proposal_cnt
+				SELECT MAX(value) AS proposal_max
 				FROM coin_info 
 				WHERE coin_idx=${d.idx} AND type='proposal'
 			`
@@ -37,6 +37,7 @@ cron.schedule('* * * * *', async function(){
 			sql3 = sql3.slice(0,-14) + ` ) AS a
 				WHERE NOT EXISTS (SELECT value FROM coin_info WHERE value = a.value)
 			`
+			// git tags
 			let res3 = await db.query(sql3)
 			let instSql = ''
 			res3.forEach(async (d3)=>{
@@ -44,12 +45,13 @@ cron.schedule('* * * * *', async function(){
 				instSql += `INSERT INTO coin_info(coin_idx, coin_info.type, coin_info.value) VALUES ('${d.idx}', 'git_tag', '${d3.value}'); `
 			})
 			
-			if(res2[0].proposal_cnt < proposalArr.length){
-				proposalArr.forEach(async (d2)=>{
+			//proposals
+			proposalArr.forEach(async (d2)=>{
+				if(res2[0].proposal_max > d2.split('|')[0]){
 					alert += (alert == '') ? 'new ! proposal '+d.explorer_url + '/proposals/' + d2.split('|')[0]: '\nnew ! proposal ' + d.explorer_url + '/proposals/' + d2.split('|')[0]
 					instSql += `INSERT INTO coin_info(coin_idx, coin_info.type, coin_info.value) VALUES ('${d.idx}', 'proposal', '${d2}'); `
-				})
-			}
+				}
+			})
 			
 			//query
 			if(instSql != ''){
