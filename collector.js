@@ -7,7 +7,7 @@ const cron = require('node-cron')
 const logger = require('./log4js').log4js//logger
 const db = require('./dbconnection')
 
-cron.schedule('* * * * * *', async function(){	
+cron.schedule('* * * * *', async function(){	
 	try{
 		logger.debug(`run date : ${new Date()}`)
 //		// get db loop
