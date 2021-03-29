@@ -7,7 +7,7 @@ const cron = require('node-cron')
 const logger = require('./log4js').log4js//logger
 const db = require('./dbconnection')
 
-cron.schedule('*/15 * * * * *', async function(){	
+cron.schedule('* * * * * *', async function(){	
 	try{
 		logger.debug(`run date : ${new Date()}`)
 //		// get db loop
@@ -65,10 +65,10 @@ cron.schedule('*/15 * * * * *', async function(){
 			if(alert != ''){
 				logger.debug(alert)
 				let bot = new telegraf(d.token)
-//				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
-//				.catch((err)=>{ //bot error
-//					logger.error(err)
-//				})
+				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
+				.catch((err)=>{ //bot error
+					logger.error(err)
+				})
 				alert = ''//initialize
 			}
 		})
