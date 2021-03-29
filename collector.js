@@ -10,7 +10,7 @@ const db = require('./dbconnection')
 cron.schedule('* * * * *', async function(){	
 	try{
 		logger.debug(`run date : ${new Date()}`)
-//		// get db coin loop
+//		// get db loop
 		let res = await db.query('SELECT coin.*, bot.name AS bot_name, bot.token, bot.room_id FROM coin, bot')
 		let alert = ''
 	
@@ -41,33 +41,33 @@ cron.schedule('* * * * *', async function(){
 			let instSql = ''
 			res3.forEach(async (d3)=>{
 				alert += 'new ! gitTag ' + d.git_url + '/releases/tag/'+ d3.value +'\n'
-				instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP();`
-				//await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}') ON DUPLICATE KEY UPDATE value='${d3.value}', edit_date = CURRENT_TIMESTAMP()`)
+				instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'git_tag', '${d3.value}');`
 			})
 			
 			if(res2[0].proposal_cnt < proposalArr.length){
 				proposalArr.forEach(async (d2)=>{
-					instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP();`
-					//await db.query(`INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}') ON DUPLICATE KEY UPDATE value='${d2}', edit_date = CURRENT_TIMESTAMP()`)
+					alert += (alert == '') ? 'new ! proposal '+d.explorer_url + '/proposals/' + d2.split('|')[0]: '\nnew ! proposal ' + d.explorer_url + '/proposals/' + d2.split('|')[0]
+					instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}');`
 				})
-				alert += (alert == '') ? 'new ! proposal '+d.explorer_url : '\nnew ! proposal ' + d.explorer_url
 			}
 			
 			//query
-			if(instSql != ''){ // insert 
+			if(instSql != ''){
 				await db.query(instSql)
-			} else{//edit date
+				instSql = ''//initialize
+			} else{
 				await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
 			}
 			
+			//send msg
 			if(alert != ''){
 				logger.debug(alert)
 				let bot = new telegraf(d.token)
-				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
-				.catch((err)=>{ //bot error
-					logger.error(err)
-				})
-				alert = ''
+//				bot.telegram.sendMessage(d.room_id, `[${d.name}]\n${alert}`)
+//				.catch((err)=>{ //bot error
+//					logger.error(err)
+//				})
+				alert = ''//initialize
 			}
 		})
 	} catch(err){
