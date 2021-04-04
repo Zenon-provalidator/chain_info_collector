@@ -55,7 +55,11 @@ cron.schedule('* * * * *', async function(){
 			
 			//query
 			if(instSql != ''){
-				await db.query(instSql)
+				let sqlArr = instSql.split(';')
+				// single query
+				for(var i=0; i<sqlArr.length; i++) {
+					await db.query(sqlArr[i])
+				}
 				instSql = ''//initialize
 			} else{
 				await db.query(`UPDATE coin_info SET edit_date = CURRENT_TIMESTAMP() WHERE coin_idx = '${d.idx}'`)
@@ -76,8 +80,6 @@ cron.schedule('* * * * *', async function(){
 		logger.error(err)
 	}	
 }).start()
-
-
 
 
 //get git tag
