@@ -47,7 +47,7 @@ cron.schedule('* * * * *', async function(){
 			
 			//proposals
 			proposalArr.forEach(async (d2)=>{
-				if(res2[0].proposal_max.split('|')[0] < d2.split('|')[0]){
+				if(res2[0].proposal_max < d2.split('|')[0]){
 					alert += (alert == '') ? 'new ! proposal '+d.explorer_url + '/proposals/' + d2.split('|')[0]: '\nnew ! proposal ' + d.explorer_url + '/proposals/' + d2.split('|')[0]
 					instSql += `INSERT INTO coin_info(coin_idx, type, value) VALUES ('${d.idx}', 'proposal', '${d2}'); `
 				}
