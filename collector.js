@@ -16,7 +16,7 @@ cron.schedule('* * * * *', async function(){
 	
 		res.forEach(async (d)=>{
 			let sql2 = `
-				SELECT MAX(value) AS proposal_max
+				SELECT COUNT(1) AS proposal_max
 				FROM coin_info 
 				WHERE coin_idx=${d.idx} AND type='proposal'
 			`
